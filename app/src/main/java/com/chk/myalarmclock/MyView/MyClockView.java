@@ -4,10 +4,16 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+
+import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by chk on 17-10-13.
@@ -16,19 +22,36 @@ import android.view.View;
 
 public class MyClockView extends View{
 
+    public static final int UPDATE_HANDS = 1;
     public static int DEVICE_WIDTH;
     public static int DEVICE_HEIGHT;
     int viewWidth;
     int viewHeight;
+    /**
+     * viewWidth和viewHeight二者之间小者的那一个
+     */
+    int minViewWidthHeight;
 
-    int AlarmHour;
-    int AlarmMinute;
+    /**
+     * viewWidth和viewHeight二者之间大者的那一个
+     */
+    int maxViewWidthHeight;
 
+    int clockSize;
+
+    int alarmHour;
+    int alarmMinute;
+
+    int clockHour;
+    int clockMinute;
+    int clockSecond;
+    Timer timer = new Timer();
+    TimerTask updateHandsTask;
     private Paint paintNums;
     private Paint paintHour;
     private Paint paintMinute;
     private Paint paintSecond;
-
+    private Handler handler;
     public int[] NUMS = {12,1,2,3,4,5,6,7,8,9,10,11};
 
     public MyClockView(Context context) {
@@ -51,13 +74,17 @@ public class MyClockView extends View{
         super.onLayout(changed, left, top, right, bottom);
         viewWidth = getWidth();
         viewHeight = getHeight();
-        Log.i("MyClockView+View","ViewHeight:"+viewHeight + " ViewWidth:"+viewWidth);
+        minViewWidthHeight = Math.min(viewWidth,viewHeight);
+        maxViewWidthHeight = Math.max(viewWidth,viewHeight);
+        init();
+        Log.i("MyClockView+View","ViewHeight:"+viewHeight + " ViewWidth:"+viewWidth+" minViewWidthHeight"+minViewWidthHeight);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         drawNum(canvas);
+        drawHands(canvas);
     }
 
     public void init() {
@@ -66,16 +93,46 @@ public class MyClockView extends View{
         DEVICE_HEIGHT = dm.heightPixels;
 
         paintNums = new Paint();
+        paintNums.setAntiAlias(true);
         paintNums.setColor(Color.BLACK);
         paintNums.setTextAlign(Paint.Align.CENTER);
-        paintNums.setStrokeWidth(100);
+        paintNums.setTextSize(minViewWidthHeight/10);
 
         paintHour = new Paint();
-        paintHour.setColor(Color.RED);
+        paintHour.setColor(Color.argb(255,255,0,0));
+        paintHour.setAntiAlias(true);
+        paintHour.setStrokeWidth(minViewWidthHeight/100);
+
         paintMinute = new Paint();
-        paintMinute.setColor(Color.GREEN);
+        paintMinute.setColor(Color.argb(155,0,255,0));
+        paintMinute.setAntiAlias(true);
+        paintMinute.setStrokeWidth(minViewWidthHeight/100);
+
         paintSecond = new Paint();
-        paintHour.setColor(Color.BLUE);
+        paintSecond.setColor(Color.argb(88,0,0,255));
+        paintSecond.setAntiAlias(true);
+        paintSecond.setStrokeWidth(minViewWidthHeight/100);
+
+        handler = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    case UPDATE_HANDS:
+                        invalidate();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+        updateHandsTask = new TimerTask() {
+            @Override
+            public void run() {
+                handler.sendEmptyMessage(UPDATE_HANDS);
+            }
+        };
+
+        timer.schedule(updateHandsTask,0,500);
     }
 
 
@@ -133,8 +190,25 @@ public class MyClockView extends View{
      * 绘制时针，分针和秒针
      * @param canvas
      */
-    public void drawHand(Canvas canvas) {
+    public void drawHands(Canvas canvas) {
+        Calendar calendar = Calendar.getInstance();
+        canvas.save();
+        clockHour = calendar.get(Calendar.HOUR_OF_DAY);
+        canvas.rotate(30 * clockHour,viewWidth/2,viewHeight/2);
+        canvas.drawLine(viewWidth/2,viewHeight/2,viewWidth/2,viewHeight/2-minViewWidthHeight/2+minViewWidthHeight/3,paintHour);
+        canvas.restore();
 
+        canvas.save();
+        clockMinute = calendar.get(Calendar.MINUTE);
+        canvas.rotate(6 * clockMinute,viewWidth/2,viewHeight/2);
+        canvas.drawLine(viewWidth/2,viewHeight/2,viewWidth/2,viewHeight/2-minViewWidthHeight/2+minViewWidthHeight/4,paintMinute);
+        canvas.restore();
+
+        canvas.save();
+        clockSecond = calendar.get(Calendar.SECOND);
+        canvas.rotate(6 * clockSecond,viewWidth/2,viewHeight/2);
+        canvas.drawLine(viewWidth/2,viewHeight/2,viewWidth/2,viewHeight/2-minViewWidthHeight/2+minViewWidthHeight/5,paintSecond);
+        canvas.restore();
     }
 
     /**
@@ -143,8 +217,8 @@ public class MyClockView extends View{
      */
     public void drawNum(Canvas canvas) {
         for (int i=0; i<NUMS.length; i++) {
-            double drawX = viewWidth/2 + Math.min(viewWidth/3,viewHeight/3) * Math.sin(Math.PI * i * 30 / 180);
-            double drawY = viewHeight/2 - Math.min(viewWidth/3,viewHeight/3) * Math.cos(Math.PI * i * 30 / 180);
+            double drawX = viewWidth/2 + minViewWidthHeight * 2/5 * Math.sin(Math.PI * i * 30 / 180);
+            double drawY = viewHeight/2 - minViewWidthHeight* 2/5 * Math.cos(Math.PI * i * 30 / 180)+minViewWidthHeight/25;
             canvas.drawText(NUMS[i]+"",(float)drawX,(float)drawY,paintNums);
         }
     }

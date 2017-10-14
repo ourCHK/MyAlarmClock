@@ -1,29 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.chk.myalarmclock.MainActivity">
 
 
-    <TimePicker
-        android:layout_alignParentBottom="true"
-        android:timePickerMode="spinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/timePicker"
-        />
+    <!--<TimePicker-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:timePickerMode="spinner"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/timePicker"-->
+        <!--/>-->
 
     <com.chk.myalarmclock.MyView.MyClockView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/colorAccent"
-        android:layout_above="@id/timePicker"
+        android:background="@color/colorPrimary"
+        android:layout_weight="1"
         />
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        >
 
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
+        </android.support.v7.widget.RecyclerView>
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_gravity="bottom|end"
+            android:layout_marginRight="5dp"
+            android:layout_marginBottom="5dp"
+            app:srcCompat="@android:drawable/ic_input_add" />
+    </RelativeLayout>
 
-
-</RelativeLayout>
+</LinearLayout>
