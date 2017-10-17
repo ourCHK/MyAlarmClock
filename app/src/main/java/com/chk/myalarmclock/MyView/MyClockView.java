@@ -192,20 +192,21 @@ public class MyClockView extends View{
      */
     public void drawHands(Canvas canvas) {
         Calendar calendar = Calendar.getInstance();
-        canvas.save();
         clockHour = calendar.get(Calendar.HOUR_OF_DAY);
-        canvas.rotate(30 * clockHour,viewWidth/2,viewHeight/2);
+        clockMinute = calendar.get(Calendar.MINUTE);
+        clockSecond = calendar.get(Calendar.SECOND);
+
+        canvas.save();
+        canvas.rotate(30 * clockHour + clockMinute/2,viewWidth/2,viewHeight/2);
         canvas.drawLine(viewWidth/2,viewHeight/2,viewWidth/2,viewHeight/2-minViewWidthHeight/2+minViewWidthHeight/3,paintHour);
         canvas.restore();
 
         canvas.save();
-        clockMinute = calendar.get(Calendar.MINUTE);
         canvas.rotate(6 * clockMinute,viewWidth/2,viewHeight/2);
         canvas.drawLine(viewWidth/2,viewHeight/2,viewWidth/2,viewHeight/2-minViewWidthHeight/2+minViewWidthHeight/4,paintMinute);
         canvas.restore();
 
         canvas.save();
-        clockSecond = calendar.get(Calendar.SECOND);
         canvas.rotate(6 * clockSecond,viewWidth/2,viewHeight/2);
         canvas.drawLine(viewWidth/2,viewHeight/2,viewWidth/2,viewHeight/2-minViewWidthHeight/2+minViewWidthHeight/5,paintSecond);
         canvas.restore();
@@ -222,4 +223,6 @@ public class MyClockView extends View{
             canvas.drawText(NUMS[i]+"",(float)drawX,(float)drawY,paintNums);
         }
     }
+
+
 }

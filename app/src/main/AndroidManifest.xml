@@ -15,7 +15,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MyActivity.SetClockActivity"></activity>
+        <activity android:name=".MyActivity.SetClockActivity" />
+
+        <receiver
+            android:name=".MyBroadCastReceiver.AlarmReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ALARM_RECEIVER">
+
+                </action>
+
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
