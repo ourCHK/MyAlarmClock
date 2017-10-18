@@ -7,6 +7,7 @@ package com.chk.myalarmclock.MyBean;
 
 public class MyAlarm {
     boolean isEmpty = true;
+    int alarmId;
     int alarmType;
     int alarmHour;
     int alarmMinute;
@@ -45,5 +46,13 @@ public class MyAlarm {
 
     public void setEmpty(boolean empty) {
         isEmpty = empty;
+    }
+
+    public int getAlarmId() {
+        return alarmId;
+    }
+
+    public void setAlarmId(int alarmId) {
+        this.alarmId = alarmId;
     }
 }

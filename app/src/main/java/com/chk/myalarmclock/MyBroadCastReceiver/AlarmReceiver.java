@@ -6,9 +6,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 import android.widget.Toast;
 
 public class AlarmReceiver extends BroadcastReceiver {
+
+    public final static String TAG = "MyAlarmReceiver";
+
     public AlarmReceiver() {
     }
 
@@ -17,10 +21,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
         Toast.makeText(context, "接收到广播", Toast.LENGTH_SHORT).show();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            setAlarmTime(context, System.currentTimeMillis() + 10000, "android.intent.action.ALARM_RECEIVER", 15);
-        }
+        Log.i(TAG,"收到广播");
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+//            setAlarmTime(context, System.currentTimeMillis() + 10000, "android.intent.action.ALARM_RECEIVER", 15);
+//        }
 
 
     }

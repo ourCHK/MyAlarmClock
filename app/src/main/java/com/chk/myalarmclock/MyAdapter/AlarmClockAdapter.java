@@ -4,6 +4,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -23,6 +24,28 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     static final int EMPTY = 1;
     static final int NOT_EMPTY = 2;
+    public interface OnItemClickListener {
+        void onItemClick(View view,int position);
+        void onItemLongClick(View view,int position);
+    }
+
+    private OnItemClickListener mOnItemClickListener;
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        mOnItemClickListener = onItemClickListener;
+    }
+
+
+
+    public interface OnSwitchCheckChangedListener {
+        void onCheckListener(CompoundButton buttonView, boolean isCheck, int position);
+    }
+
+    private OnSwitchCheckChangedListener mOnSwitchCheckChangedListener;
+
+    public void setOnSwitchCheckListener(OnSwitchCheckChangedListener onSwitchCheckChanged) {
+        mOnSwitchCheckChangedListener = onSwitchCheckChanged;
+    }
 
 
     public AlarmClockAdapter() {
@@ -36,19 +59,6 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public int getItemCount() {
         return mAlarmList.size();
     }
-
-//    @Override
-//    public AlarmHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//        if (viewType == NOT_EMPTY) {
-//            View view  = LayoutInflater.from(parent.getContext()).inflate(R.layout.alarm_clock_item,parent,false);
-//            AlarmHolder viewHolder = new AlarmHolder(view);
-//            return viewHolder;
-//        } else {
-//            View view  = LayoutInflater.from(parent.getContext()).inflate(R.layout.alarm_clock_empty,parent,false);
-//            EmptyHolder emptyHolder = new EmptyHolder(view);
-//            return emptyHolder;
-//        }
-//    }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -64,25 +74,41 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     }
 
 
-//    @Override
-//    public void onBindViewHolder(AlarmHolder holder, int position) {
-//        if (mAlarmList != null) {
-//            MyAlarm myAlarm = mAlarmList.get(position);
-//            if (!myAlarm.isEmpty()) {  //有实际的alarm，不为空
-//                holder.textView.setText(myAlarm.getAlarmHour()+":"+myAlarm.getAlarmMinute());
-//            }
-//        }
-//    }
-
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
         if (mAlarmList != null) {
             MyAlarm myAlarm = mAlarmList.get(position);
             if (holder instanceof AlarmHolder) {
                 ((AlarmHolder)holder).textView.setText(myAlarm.getAlarmHour()+":"+myAlarm.getAlarmMinute());
+                if (mOnItemClickListener != null) {
+                    holder.itemView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            mOnItemClickListener.onItemClick(v,position);
+                        }
+                    });
+                    holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View v) {
+                            mOnItemClickListener.onItemLongClick(v,position);
+                            return true;
+                        }
+                    });
+                }
+
+                if (mOnSwitchCheckChangedListener != null) {
+                    ((AlarmHolder) holder).mySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                        @Override
+                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                            mOnSwitchCheckChangedListener.onCheckListener(buttonView,isChecked,position);
+                        }
+                    });
+                }
             }
         }
     }
+
+
 
     public static class AlarmHolder extends RecyclerView.ViewHolder{
 

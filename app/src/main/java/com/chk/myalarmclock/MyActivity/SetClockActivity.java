@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
@@ -60,16 +61,13 @@ public class SetClockActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_set_clock);
-        Intent intent = getIntent();
-        requestCode = intent.getIntExtra("REQUEST_TYPE",-1);
+
         viewInit();
         serviceInit();
     }
 
     void viewInit() {
-
         alarmTypeText = (TextView) findViewById(R.id.alarmTypeText);
-
         setRepeatTime = (TableRow) findViewById(R.id.setRepeatTime);
         setRepeatTime.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -77,7 +75,6 @@ public class SetClockActivity extends AppCompatActivity {
                 showPopupView();
             }
         });
-
         timePicker = (TimePicker) findViewById(R.id.timePicker);
         timePicker.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
             @Override
@@ -86,9 +83,23 @@ public class SetClockActivity extends AppCompatActivity {
                 alarmMinute = minute;
             }
         });
-        alarmHour = timePicker.getCurrentHour();
-        alarmMinute = timePicker.getCurrentMinute();
 
+        Intent intent = getIntent();
+        requestCode = intent.getIntExtra("REQUEST_TYPE",-1);
+        switch (requestCode) {
+            case ADD:
+                alarmHour = timePicker.getCurrentHour();
+                alarmMinute = timePicker.getCurrentMinute();
+                break;
+            case UPDATE:
+                alarmHour = intent.getIntExtra("alarmHour",-1);
+                alarmMinute = intent.getIntExtra("alarmMinute",-1);
+                timePicker.setCurrentHour(alarmHour);
+                timePicker.setCurrentMinute(alarmMinute);
+                break;
+            default:
+                break;
+        }
     }
 
     void showPopupView() {
