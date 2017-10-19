@@ -23,4 +23,12 @@
         <item name="android:windowExitAnimation">@anim/out</item>
     </style>
 
+    <style name="MyDialogStryle" parent="@android:style/Theme.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:background">@android:color/white</item>
+        <item name="android:windowAnimationStyle">@style/popup_window_anim</item>
+    </style>
+
+
+
 </resources>

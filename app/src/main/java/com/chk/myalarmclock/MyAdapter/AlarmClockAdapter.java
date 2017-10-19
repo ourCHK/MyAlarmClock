@@ -17,13 +17,14 @@ import java.util.ArrayList;
  * Created by chk on 17-10-16.
  */
 
-public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements ItemTouchHelperAdapter{
 
 
     ArrayList<MyAlarm> mAlarmList;
 
     static final int EMPTY = 1;
     static final int NOT_EMPTY = 2;
+
     public interface OnItemClickListener {
         void onItemClick(View view,int position);
         void onItemLongClick(View view,int position);
@@ -35,8 +36,6 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         mOnItemClickListener = onItemClickListener;
     }
 
-
-
     public interface OnSwitchCheckChangedListener {
         void onCheckListener(CompoundButton buttonView, boolean isCheck, int position);
     }
@@ -45,6 +44,17 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public void setOnSwitchCheckListener(OnSwitchCheckChangedListener onSwitchCheckChanged) {
         mOnSwitchCheckChangedListener = onSwitchCheckChanged;
+    }
+
+    public interface OnItemSwipeListener {
+        void onSwipe(int position);
+    }
+
+    private OnItemSwipeListener onItemSwipeListener;
+
+
+    public void setOnItemSwipeListener(OnItemSwipeListener onItemSwipeListener) {
+        this.onItemSwipeListener = onItemSwipeListener;
     }
 
 
@@ -79,7 +89,8 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         if (mAlarmList != null) {
             MyAlarm myAlarm = mAlarmList.get(position);
             if (holder instanceof AlarmHolder) {
-                ((AlarmHolder)holder).textView.setText(myAlarm.getAlarmHour()+":"+myAlarm.getAlarmMinute());
+                ((AlarmHolder) holder).textView.setText(myAlarm.getAlarmHour()+":"+myAlarm.getAlarmMinute());
+                ((AlarmHolder) holder).alarmType.setText(myAlarm.getAlarmType() + "");
                 if (mOnItemClickListener != null) {
                     holder.itemView.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -113,11 +124,13 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public static class AlarmHolder extends RecyclerView.ViewHolder{
 
         public TextView textView;
+        public TextView alarmType;
         public Switch mySwitch;
         public AlarmHolder(View view) {
             super(view);
             textView = (view).findViewById(R.id.alarmText);
             mySwitch = (view).findViewById(R.id.alarmSwitch);
+            alarmType = (view).findViewById(R.id.alarmType);
         }
     }
 
@@ -131,4 +144,20 @@ public class AlarmClockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public int getItemViewType(int position) {
         return mAlarmList.get(position).isEmpty()?EMPTY:NOT_EMPTY;
     }
+
+    @Override
+    public void onItemDismiss(int position) {
+//        mAlarmList.remove(position);
+//        notifyItemRemoved(position);
+//        mAlarmList.add(new MyAlarm());
+//        notifyItemInserted(mAlarmList.size());
+        if (onItemSwipeListener != null)
+            onItemSwipeListener.onSwipe(position);
+    }
+
+    @Override
+    public void onItemMove(int position) {
+
+    }
+
 }

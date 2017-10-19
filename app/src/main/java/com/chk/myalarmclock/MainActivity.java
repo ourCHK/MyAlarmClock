@@ -3,12 +3,14 @@ package com.chk.myalarmclock;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Toast;
@@ -16,15 +18,12 @@ import android.widget.Toast;
 import com.chk.myalarmclock.MyActivity.SetClockActivity;
 import com.chk.myalarmclock.MyAdapter.AlarmClockAdapter;
 import com.chk.myalarmclock.MyAdapter.DecorationTest;
-import com.chk.myalarmclock.MyAdapter.DividerItemDecoration;
-import com.chk.myalarmclock.MyAdapter.MyItemDecoration;
+import com.chk.myalarmclock.MyAdapter.MyItemTouchHelperCallback;
 import com.chk.myalarmclock.MyBean.MyAlarm;
 import com.chk.myalarmclock.MyBroadCastReceiver.AlarmReceiver;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-
-import static com.chk.myalarmclock.MyAdapter.MyItemDecoration.HORIZONTAL_LIST;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -55,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
             MyAlarm myAlarm = new MyAlarm();
             mAlarmList.add(myAlarm);
         }
-
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
     }
 
@@ -87,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onItemLongClick(View view, int position) {
-                Toast.makeText(MainActivity.this, "longPress " +position, Toast.LENGTH_SHORT).show();
             }
         });
         mAlarmClockAdapter.setOnSwitchCheckListener(new AlarmClockAdapter.OnSwitchCheckChangedListener() {
@@ -95,17 +92,32 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckListener(CompoundButton buttonView, boolean isCheck, int position) {
                 Toast.makeText(MainActivity.this, "" + isCheck, Toast.LENGTH_SHORT).show();
                 if (!isCheck) {
-                    cancelAlarm(position);
-                    Toast.makeText(MainActivity.this, "取消闹钟", Toast.LENGTH_SHORT).show();
+                    turnOffAlarm(position);
+                    Toast.makeText(MainActivity.this, "关闭闹钟", Toast.LENGTH_SHORT).show();
+                } else {
+                    turnOnAlarm(position);
+                    Toast.makeText(MainActivity.this, "开启闹钟", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+        mAlarmClockAdapter.setOnItemSwipeListener(new AlarmClockAdapter.OnItemSwipeListener() {
+            @Override
+            public void onSwipe(int position) {
+                turnOffAlarm(position);  //取消闹钟
+                mAlarmList.remove(position);
+                mAlarmClockAdapter.notifyItemRemoved(position);
+                mAlarmList.add(new MyAlarm());   //新增一个MyView保持一直都有7个
+                mAlarmClockAdapter.notifyItemInserted(mAlarmList.size()+1);    //刷新
+            }
+        });
+
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(mAlarmClockAdapter);
-        recyclerView.addItemDecoration(new DecorationTest());
-//        recyclerView.addItemDecoration(new MyItemDecoration(this,LinearLayoutManager.VERTICAL));
-//        recyclerView.addItemDecoration(new DividerItemDecoration(getResources().getColor(R.color.colorAccent),1,LinearLayoutManager.VERTICAL));
+        recyclerView.addItemDecoration(new DecorationTest(10, Color.rgb(00,0xFF,0xFF)));
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new MyItemTouchHelperCallback(mAlarmClockAdapter));
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+
     }
 
     @Override
@@ -201,13 +213,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 取消闹钟
+     * 关闭闹钟
      * @param position 取消position的那个闹钟
      */
-    public void cancelAlarm(int position) {
+    public void turnOffAlarm(int position) {
         Intent intent = new Intent(MainActivity.this,AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this,mAlarmList.get(position).getAlarmId(),intent,PendingIntent.FLAG_CANCEL_CURRENT);
         alarmManager.cancel(pendingIntent);
+        Toast.makeText(this, "已取消该闹钟", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 开启闹钟
+     * @param position
+     */
+    public void turnOnAlarm(int position) {
+        MyAlarm myAlarm = mAlarmList.get(position);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY,myAlarm.getAlarmHour());
+        calendar.set(Calendar.MINUTE,myAlarm.getAlarmMinute());
+        calendar.set(Calendar.SECOND,0);
+        calendar.set(Calendar.MILLISECOND,0);
+        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this,myAlarm.getAlarmId(),intent,PendingIntent.FLAG_CANCEL_CURRENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {  //4.4版本以上
+            alarmManager.setExact(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
+        } else {
+            alarmManager.set(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
+        }
     }
 
 

@@ -3,23 +3,49 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="50dp"
-    android:divider="@drawable/my_divider"
-    android:showDividers="middle"
-    android:layout_margin="5dp"
+
+    android:background="@drawable/item_background"
     >
 
-    <TextView
-        android:id="@+id/alarmText"
+    <LinearLayout
         android:layout_weight="1"
         android:layout_width="0dp"
-        android:layout_height="wrap_content" />
+        android:layout_height="match_parent"
+        android:showDividers="middle"
+        android:divider="@drawable/linear_divider"
+        android:dividerPadding="5dp">
+        <TextView
+            android:text="HELLO"
+            android:paddingLeft="20dp"
+            android:paddingRight="10dp"
+            android:textSize="30sp"
+            android:layout_gravity="center_vertical"
+            android:id="@+id/alarmText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:text=""
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:id="@+id/alarmType"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
+
+
 
     <Switch
+        android:layout_gravity="center_vertical"
         android:id="@+id/alarmSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:checked="true"
         />
+
 
 
 </LinearLayout>

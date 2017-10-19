@@ -14,17 +14,31 @@ import android.view.View;
 public class DecorationTest extends RecyclerView.ItemDecoration{
 
     Paint paint;
+    int color;
+    int dividerWidth;
 
     public DecorationTest() {
-        paint = new Paint();
-        paint.setColor(Color.BLUE);
-
+        init();
     }
+
+    public DecorationTest(int dividerWidth, int color) {
+        init();
+        this.dividerWidth = dividerWidth;
+        this.color = color;
+        paint.setColor(color);
+    }
+
+    public void init() {
+        paint = new Paint();
+        color = Color.GRAY;
+    }
+
+
 
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
 //        super.getItemOffsets(outRect, view, parent, state);
-        outRect.set(0,0,0,40);
+        outRect.set(0,0,0,dividerWidth);
     }
 
     @Override
@@ -47,10 +61,13 @@ public class DecorationTest extends RecyclerView.ItemDecoration{
         int childCount = parent.getChildCount();
         int left = parent.getPaddingLeft();
         int right = parent.getWidth() - parent.getPaddingRight();
-        for (int i=0; i<childCount; i++) {
+        for (int i=0; i<childCount - 1; i++) {
+
             View view  = parent.getChildAt(i);
-            int top = view.getBottom();
-            int bottom = top + 40;
+            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) view
+                    .getLayoutParams();
+            int top = view.getBottom() + params.bottomMargin;
+            int bottom = top + dividerWidth;
             canvas.drawRect(left,top,right,bottom,paint);
         }
     }

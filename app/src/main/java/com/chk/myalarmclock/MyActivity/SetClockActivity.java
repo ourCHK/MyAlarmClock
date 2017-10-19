@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +23,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.chk.myalarmclock.MyDialog.MyDialog;
 import com.chk.myalarmclock.R;
+import com.chk.myalarmclock.Utils.ByteUtil;
 
 import java.util.Calendar;
 
@@ -52,6 +55,11 @@ public class SetClockActivity extends AppCompatActivity {
     PopupWindow popupWindow;
     ListView popupListView;
     String datas[] = {"ONCE","DAILY","MON TO FRIDAY","CUSTOM"};
+
+    View popupDateView;
+    PopupWindow popupChooseDateWindow;
+    ListView popupChooseDateListView;
+    String weekends[] = {"MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"};
 
 
 
@@ -115,7 +123,6 @@ public class SetClockActivity extends AppCompatActivity {
         getWindow().setAttributes(lp);
         popupWindow.update();
         popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
-
             @Override
             public void onDismiss() {
                 WindowManager.LayoutParams lp = getWindow().getAttributes();
@@ -129,12 +136,26 @@ public class SetClockActivity extends AppCompatActivity {
         popupListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                alarmTypeText.setText(datas[position]);
-                alarmType = position;
-                popupWindow.dismiss();
+                switch (position) {
+                    case 0:
+                    case 1:
+                    case 2:
+                        alarmTypeText.setText(datas[position]);
+                        alarmType = position;
+                        popupWindow.dismiss();
+                        break;
+                    case 3:
+                        popupWindow.dismiss();
+                        MyDialog myDialog = new MyDialog(SetClockActivity.this);
+                        myDialog.show();
+                        break;
+                    default:
+                        break;
+                }
             }
         });
     }
+
 
 //    void viewInit() {
 //        timePicker = (TimePicker) findViewById(R.id.timePicker);
