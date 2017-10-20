@@ -7,7 +7,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.chk.myalarmclock.MyAdapter.AlarmClockAdapter;

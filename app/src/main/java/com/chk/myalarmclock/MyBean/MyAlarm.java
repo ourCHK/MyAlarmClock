@@ -11,6 +11,15 @@ public class MyAlarm {
     int alarmType;
     int alarmHour;
     int alarmMinute;
+    String customDays;
+
+    public String getCustomDays() {
+        return customDays;
+    }
+
+    public void setCustomDays(String customDays) {
+        this.customDays = customDays;
+    }
 
     public int getAlarmHour() {
         return alarmHour;

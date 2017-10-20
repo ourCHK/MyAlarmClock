@@ -9,9 +9,21 @@ import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.chk.myalarmclock.MyActivity.SetClockActivity;
+
+import static com.chk.myalarmclock.MyActivity.SetClockActivity.CUSTOM;
+import static com.chk.myalarmclock.MyActivity.SetClockActivity.DAILY;
+import static com.chk.myalarmclock.MyActivity.SetClockActivity.MON_TO_FRIDAY;
+import static com.chk.myalarmclock.MyActivity.SetClockActivity.ONCE;
+
 public class AlarmReceiver extends BroadcastReceiver {
 
     public final static String TAG = "MyAlarmReceiver";
+    String customDays = "";
+    int alarmType;
+    int alarmHour;
+    int alarmMinute;
+    int alarmId;
 
     public AlarmReceiver() {
     }
@@ -21,12 +33,35 @@ public class AlarmReceiver extends BroadcastReceiver {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
         Toast.makeText(context, "接收到广播", Toast.LENGTH_SHORT).show();
-        Log.i(TAG,"收到广播");
+        alarmId = intent.getIntExtra("alarmId",-1);
+        alarmType = intent.getIntExtra("alarmType",-1);
+        alarmHour = intent.getIntExtra("alarmHour",-1);
+        alarmMinute = intent.getIntExtra("alarmMinute",-1);
+        customDays = intent.getStringExtra("customDays");   //没有的话为null
+
+        Log.i(TAG,"alarmId:"+alarmId+" alarmType:"+alarmType+" alarmHour:"+alarmHour+" alarmMinute:"+alarmMinute+" customDays:"+customDays);
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 //            setAlarmTime(context, System.currentTimeMillis() + 10000, "android.intent.action.ALARM_RECEIVER", 15);
 //        }
 
 
+    }
+
+    /**
+     * 设置重复
+     */
+    public void setRepeat() {
+        switch (alarmType) {
+            case ONCE:
+
+                break;
+            case DAILY:
+                break;
+            case MON_TO_FRIDAY:
+                break;
+            case CUSTOM:
+                break;
+        }
     }
 
     public static void setAlarmTime(Context context, long timeInMillis,String action, int time) {

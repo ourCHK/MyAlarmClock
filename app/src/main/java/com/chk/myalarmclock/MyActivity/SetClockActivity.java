@@ -1,6 +1,7 @@
 package com.chk.myalarmclock.MyActivity;
 
 import android.app.AlarmManager;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -15,6 +16,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
@@ -23,7 +25,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.chk.myalarmclock.MyAdapter.MyDialogTwoAdapter;
 import com.chk.myalarmclock.MyDialog.MyDialog;
+import com.chk.myalarmclock.MyDialog.MyDialogTwo;
 import com.chk.myalarmclock.R;
 import com.chk.myalarmclock.Utils.ByteUtil;
 
@@ -40,6 +44,8 @@ public class SetClockActivity extends AppCompatActivity {
     public static final int DAILY = 2;
     public static final int MON_TO_FRIDAY = 3;
     public static final int CUSTOM = 4;
+    public int[] custom_days = new int[7];   //用于存储勾选的日期
+    public String customDays = "";
     int alarmType;
     int alarmHour;
     int alarmMinute;
@@ -60,8 +66,6 @@ public class SetClockActivity extends AppCompatActivity {
     PopupWindow popupChooseDateWindow;
     ListView popupChooseDateListView;
     String weekends[] = {"MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"};
-
-
 
     AlarmManager alarmManager;
 
@@ -100,14 +104,43 @@ public class SetClockActivity extends AppCompatActivity {
                 alarmMinute = timePicker.getCurrentMinute();
                 break;
             case UPDATE:
-                alarmHour = intent.getIntExtra("alarmHour",-1);
-                alarmMinute = intent.getIntExtra("alarmMinute",-1);
-                timePicker.setCurrentHour(alarmHour);
-                timePicker.setCurrentMinute(alarmMinute);
+                update();
                 break;
             default:
                 break;
         }
+    }
+
+    /**
+     * 接受MainActivity跳转过来的更新请求
+     */
+    public void update() {
+        Intent intent = getIntent();
+        alarmType = intent.getIntExtra("alarmType",-1);
+        alarmMinute = intent.getIntExtra("alarmMinute",-1);
+        alarmHour = intent.getIntExtra("alarmHour",-1);
+        alarmTypeText.setText("");
+        switch(alarmType) {
+            case ONCE:
+                alarmTypeText.setText(datas[alarmType-1]);
+                break;
+            case DAILY:
+                alarmTypeText.setText(datas[alarmType-1]);
+                break;
+            case MON_TO_FRIDAY:
+                alarmTypeText.setText(datas[alarmType-1]);
+                break;
+            case CUSTOM:
+                alarmTypeText.setText("");
+                for (int i=0; i<customDays.length(); i++) {
+                    if (customDays.charAt(i) == '1'){
+                        alarmTypeText.append(weekends[i]+" ");
+                    }
+                }
+                break;
+        }
+        timePicker.setCurrentHour(alarmHour);
+        timePicker.setCurrentMinute(alarmMinute);
     }
 
     void showPopupView() {
@@ -136,18 +169,18 @@ public class SetClockActivity extends AppCompatActivity {
         popupListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
                 switch (position) {
                     case 0:
                     case 1:
                     case 2:
                         alarmTypeText.setText(datas[position]);
-                        alarmType = position;
+                        alarmType = position + 1;
                         popupWindow.dismiss();
                         break;
                     case 3:
                         popupWindow.dismiss();
-                        MyDialog myDialog = new MyDialog(SetClockActivity.this);
-                        myDialog.show();
+                        showMyDialogTwo();
                         break;
                     default:
                         break;
@@ -156,78 +189,29 @@ public class SetClockActivity extends AppCompatActivity {
         });
     }
 
-
-//    void viewInit() {
-//        timePicker = (TimePicker) findViewById(R.id.timePicker);
-//        choosedHour = (TextView) findViewById(R.id.choosedHour);
-//        choosedMinute = (TextView) findViewById(R.id.choosedMinute);
-//        addAlarmClock = (Button) findViewById(R.id.addAlarmClock);
-//        timePicker.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
-//            @Override
-//            public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
-//                alarmHour = hourOfDay;
-//                alarmMinute = minute;
-//                choosedHour.setText("时："+hourOfDay);
-//                choosedMinute.setText("分："+minute);
-//            }
-//        });
-//
-//        addAlarmClock.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Calendar calendar = Calendar.getInstance();
-//                calendar.set(Calendar.HOUR_OF_DAY,alarmHour);
-//                calendar.set(Calendar.MINUTE,alarmMinute);
-//                calendar.set(Calendar.SECOND,0);
-//                calendar.set(Calendar.MILLISECOND,0);
-//                Intent intent = new Intent(SetClockActivity.this, AlarmReceiver.class);
-//                PendingIntent pendingIntent = PendingIntent.getBroadcast(SetClockActivity.this,1,intent,PendingIntent.FLAG_CANCEL_CURRENT);
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-//                    alarmManager.setExact(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
-//                    alarmManager.setWindow(AlarmManager.RTC, calendar.getTimeInMillis(),10000,pendingIntent);
-//                } else {
-//                    alarmManager.set(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
-//                    alarmManager.setRepeating(AlarmManager.RTC,calendar.getTimeInMillis(), 5000,pendingIntent);
-//                }
-//
-//                Log.i("setClockActivity",System.currentTimeMillis()+"  "+calendar.getTimeInMillis());
-////                alarmManager.setRepeating(AlarmManager.RTC,calendar.getTimeInMillis(),5000,pendingIntent);
-//                Toast.makeText(SetClockActivity.this, "已创建", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//    }
-
     void serviceInit() {
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
     }
 
-    long timeToMilliSecond(Calendar calendar) {
-        Calendar calendarCurrent = Calendar.getInstance();
-        long milliSeconds = 0;
-        int hour = calendar.get(Calendar.HOUR);
-        int minute = calendar.get(Calendar.MINUTE);
 
-        if (hour < calendarCurrent.get(Calendar.HOUR)) {    //设置的时间比当前时间小
-            hour = 24 - calendarCurrent.get(Calendar.HOUR) + hour;
-        }
-        if (minute < calendarCurrent.get(Calendar.MINUTE)) {    //设置的分钟比当前的分钟小
-            minute = 60 - calendarCurrent.get(Calendar.MINUTE) + minute;
-        }
-        milliSeconds = ( hour * 3600 + minute * 60 ) * 1000;
-        return milliSeconds;
-    }
-
+    /**
+     * 直接给botton调用
+     * @param view
+     */
     public void cancel(View view) {
         finish();
     }
 
+    /**
+     * 直接给bottom调用
+     * @param view
+     */
     public void ok(View view) {
         Intent intent  = new Intent();
         intent.putExtra("alarmType",alarmType);
         intent.putExtra("alarmHour",alarmHour);
         intent.putExtra("alarmMinute",alarmMinute);
-
+        intent.putExtra("customDays",customDays);
         switch (requestCode) {
             case ADD:
                 setResult(ADD,intent);
@@ -239,5 +223,62 @@ public class SetClockActivity extends AppCompatActivity {
                 break;
         }
         finish();
+    }
+
+    /**
+     * 显示选择具体日期的dialog，因为无法在一个popupView中继续弹出一个
+     * popupView，所以只能用dialog替代
+     */
+    public void showMyDialogTwo() {
+        final MyDialogTwo dialogTwo = new MyDialogTwo(this);
+        dialogTwo.show();
+        dialogTwo.setMyDialogViewAdapter(new MyDialogTwoAdapter(new MyDialogTwoAdapter.MyOnCkeckedChangeListener() {
+            @Override
+            public void OnCheck(CompoundButton buttonView, boolean isChecked, int position) {
+                if (isChecked)
+                    custom_days[position] = 1;
+                else
+                    custom_days[position] = 0;
+            }
+        }));
+        dialogTwo.setCancelable(true);
+        dialogTwo.setOkButtonClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialogTwo.dismiss();
+                setCustomDay();
+            }
+        });
+    }
+
+    /**
+     * 数组转字符串
+     * @param custom_days 存储日期
+     * @return
+     */
+    public String customDayToString(int[] custom_days) {
+        String customDays = "";
+        for (int i=0; i<custom_days.length; i++) {
+            customDays += custom_days[i]+"";
+            custom_days[i] = 0; //讲数组重新赋值为0
+        }
+        return customDays;
+    }
+
+    /**
+     * 选择完自定义日期后处理
+     */
+    public void setCustomDay() {
+        customDays = customDayToString(custom_days);
+        if (customDays.equals("0000000")) { //没有选择任何一天，直接返回
+            return;
+        }
+        alarmTypeText.setText("");
+        alarmType = CUSTOM;
+        for (int i=0; i<customDays.length(); i++) {
+            if (customDays.charAt(i) == '1'){
+                alarmTypeText.append(weekends[i]+" ");
+            }
+        }
     }
 }

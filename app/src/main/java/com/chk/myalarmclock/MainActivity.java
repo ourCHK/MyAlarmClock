@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     int alarmHour;
     int alarmMinute;
     int alarmType;
+    String customDays;  //设置自定义时用的，默认为""
     int alarmPosition = -1; //修改alarm时alarm的位置
     ArrayList<MyAlarm> mAlarmList;
 
@@ -78,8 +79,10 @@ public class MainActivity extends AppCompatActivity {
                 MyAlarm tempAlarm = mAlarmList.get(position);
                 Intent intent = new Intent(MainActivity.this,SetClockActivity.class);
                 intent.putExtra("REQUEST_TYPE",SetClockActivity.UPDATE);
+                intent.putExtra("alarmType",tempAlarm.getAlarmType());
                 intent.putExtra("alarmHour",tempAlarm.getAlarmHour());
                 intent.putExtra("alarmMinute",tempAlarm.getAlarmMinute());
+                intent.putExtra("customDays",tempAlarm.getCustomDays());
                 startActivityForResult(intent,SetClockActivity.UPDATE);
             }
 
@@ -117,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.addItemDecoration(new DecorationTest(10, Color.rgb(00,0xFF,0xFF)));
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new MyItemTouchHelperCallback(mAlarmClockAdapter));
         itemTouchHelper.attachToRecyclerView(recyclerView);
-
     }
 
     @Override
@@ -128,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 alarmType = data.getIntExtra("alarmType",-1);
                 alarmHour = data.getIntExtra("alarmHour",-1);
                 alarmMinute = data.getIntExtra("alarmMinute",-1);
+                customDays = data.getStringExtra("customDays");
                 addAlarm();
                 break;
             case SetClockActivity.UPDATE:
@@ -135,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 alarmType = data.getIntExtra("alarmType",-1);
                 alarmHour = data.getIntExtra("alarmHour",-1);
                 alarmMinute = data.getIntExtra("alarmMinute",-1);
+                customDays = data.getStringExtra("customDays");
                 updateAlarm(alarmPosition);
                 break;
             case SetClockActivity.CANCEL:
@@ -155,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 tempAlarm.setAlarmType(alarmType);
                 tempAlarm.setAlarmHour(alarmHour);
                 tempAlarm.setAlarmMinute(alarmMinute);
-
+                tempAlarm.setCustomDays(customDays);
                 if (i == mAlarmList.size() - 1) {   //说明空Alarm已经用完了，需要重新再创建一个空Alarm保证永远都会存在一个空alarm
                     mAlarmList.add(new MyAlarm());
                 }
@@ -175,7 +179,14 @@ public class MainActivity extends AppCompatActivity {
         calendar.set(Calendar.MINUTE,alarmMinute);
         calendar.set(Calendar.SECOND,0);
         calendar.set(Calendar.MILLISECOND,0);
+
         Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        intent.putExtra("alarmId",alarmId);
+        intent.putExtra("alarmType",alarmType);
+        intent.putExtra("alarmHour",alarmHour);
+        intent.putExtra("alarmMinute",alarmMinute);
+        intent.putExtra("customDays",customDays);
+
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this,alarmId,intent,PendingIntent.FLAG_CANCEL_CURRENT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {  //4.4版本以上
             alarmManager.setExact(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
@@ -195,12 +206,18 @@ public class MainActivity extends AppCompatActivity {
         myAlarm.setAlarmType(alarmType);
         myAlarm.setAlarmHour(alarmHour);
         myAlarm.setAlarmMinute(alarmMinute);
+        myAlarm.setCustomDays(customDays);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY,alarmHour);
         calendar.set(Calendar.MINUTE,alarmMinute);
         calendar.set(Calendar.SECOND,0);
         calendar.set(Calendar.MILLISECOND,0);
         Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        intent.putExtra("alarmId",myAlarm.getAlarmId());
+        intent.putExtra("alarmType",alarmType);
+        intent.putExtra("alarmHour",alarmHour);
+        intent.putExtra("alarmMinute",alarmMinute);
+        intent.putExtra("customDays",customDays);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this,myAlarm.getAlarmId(),intent,PendingIntent.FLAG_CANCEL_CURRENT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {  //4.4版本以上
             alarmManager.setExact(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
@@ -209,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
             alarmManager.setRepeating(AlarmManager.RTC,calendar.getTimeInMillis(), 5000,pendingIntent);
         }
         mAlarmClockAdapter.notifyDataSetChanged();
-        alarmPosition = -1;
+        alarmPosition = -1; //恢复无选中状态
     }
 
     /**
@@ -235,6 +252,11 @@ public class MainActivity extends AppCompatActivity {
         calendar.set(Calendar.SECOND,0);
         calendar.set(Calendar.MILLISECOND,0);
         Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        intent.putExtra("alarmId",myAlarm.getAlarmId());
+        intent.putExtra("alarmType",myAlarm.getAlarmType());
+        intent.putExtra("alarmHour",myAlarm.getAlarmHour());
+        intent.putExtra("alarmMinute",myAlarm.getAlarmMinute());
+        intent.putExtra("customDays",myAlarm.getCustomDays());
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this,myAlarm.getAlarmId(),intent,PendingIntent.FLAG_CANCEL_CURRENT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {  //4.4版本以上
             alarmManager.setExact(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
@@ -242,7 +264,4 @@ public class MainActivity extends AppCompatActivity {
             alarmManager.set(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
         }
     }
-
-
-
 }
