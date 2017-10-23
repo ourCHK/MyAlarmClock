@@ -3,6 +3,7 @@ package com.chk.myalarmclock;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
@@ -11,10 +12,13 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
+import com.chk.myalarmclock.DB.MyAlarmDBHelper;
 import com.chk.myalarmclock.MyActivity.SetClockActivity;
 import com.chk.myalarmclock.MyAdapter.AlarmClockAdapter;
 import com.chk.myalarmclock.MyAdapter.DecorationTest;
@@ -27,6 +31,7 @@ import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
+    Button cancelTest;
     private final static int ASK_FOR_SET_CLOCK = 1;
     FloatingActionButton fab;
     RecyclerView recyclerView;
@@ -41,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     int alarmPosition = -1; //修改alarm时alarm的位置
     ArrayList<MyAlarm> mAlarmList;
 
+
+    MyAlarmDBHelper dbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,15 +58,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void dataInit() {
+        dbHelper =  new MyAlarmDBHelper(this);
         mAlarmList = new ArrayList<>();
-        for (int i=0; i<7; i++) {
-            MyAlarm myAlarm = new MyAlarm();
-            mAlarmList.add(myAlarm);
+
+        queryFromDB();
+        if (mAlarmList.size() >= 7) {
+            mAlarmList.add(new MyAlarm());
+        } else {
+            for (int i=mAlarmList.size(); i<7; i++) {
+                MyAlarm myAlarm = new MyAlarm();
+                mAlarmList.add(myAlarm);
+            }
         }
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
     }
 
     public void viewInit() {
+
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,12 +117,14 @@ public class MainActivity extends AppCompatActivity {
                     turnOnAlarm(position);
                     Toast.makeText(MainActivity.this, "开启闹钟", Toast.LENGTH_SHORT).show();
                 }
+                updateOnDB(mAlarmList.get(position));
             }
         });
         mAlarmClockAdapter.setOnItemSwipeListener(new AlarmClockAdapter.OnItemSwipeListener() {
             @Override
             public void onSwipe(int position) {
                 turnOffAlarm(position);  //取消闹钟
+                deleteFromDB(position);  //数据库中删除该闹钟
                 mAlarmList.remove(position);
                 mAlarmClockAdapter.notifyItemRemoved(position);
                 mAlarmList.add(new MyAlarm());   //新增一个MyView保持一直都有7个
@@ -120,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.addItemDecoration(new DecorationTest(10, Color.rgb(00,0xFF,0xFF)));
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new MyItemTouchHelperCallback(mAlarmClockAdapter));
         itemTouchHelper.attachToRecyclerView(recyclerView);
+        mAlarmClockAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -155,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
             MyAlarm tempAlarm = mAlarmList.get(i);
             if (tempAlarm.isEmpty()) {   //空Alarm，直接重用该alarm即可
                 tempAlarm.setEmpty(false);
+                tempAlarm.setOn(true);
                 tempAlarm.setAlarmId(alarmId);
                 tempAlarm.setAlarmType(alarmType);
                 tempAlarm.setAlarmHour(alarmHour);
@@ -163,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
                 if (i == mAlarmList.size() - 1) {   //说明空Alarm已经用完了，需要重新再创建一个空Alarm保证永远都会存在一个空alarm
                     mAlarmList.add(new MyAlarm());
                 }
+                insertOnDB(tempAlarm);
                 break;
             }
         }
@@ -180,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         calendar.set(Calendar.SECOND,0);
         calendar.set(Calendar.MILLISECOND,0);
 
-        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        Intent intent = new Intent("android.intent.action.ALARM_RECEIVER");
         intent.putExtra("alarmId",alarmId);
         intent.putExtra("alarmType",alarmType);
         intent.putExtra("alarmHour",alarmHour);
@@ -212,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
         calendar.set(Calendar.MINUTE,alarmMinute);
         calendar.set(Calendar.SECOND,0);
         calendar.set(Calendar.MILLISECOND,0);
-        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        Intent intent = new Intent("android.intent.action.ALARM_RECEIVER");
         intent.putExtra("alarmId",myAlarm.getAlarmId());
         intent.putExtra("alarmType",alarmType);
         intent.putExtra("alarmHour",alarmHour);
@@ -234,10 +255,13 @@ public class MainActivity extends AppCompatActivity {
      * @param position 取消position的那个闹钟
      */
     public void turnOffAlarm(int position) {
-        Intent intent = new Intent(MainActivity.this,AlarmReceiver.class);
+
+        Intent intent = new Intent("android.intent.action.ALARM_RECEIVER");
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this,mAlarmList.get(position).getAlarmId(),intent,PendingIntent.FLAG_CANCEL_CURRENT);
         alarmManager.cancel(pendingIntent);
         Toast.makeText(this, "已取消该闹钟", Toast.LENGTH_SHORT).show();
+
+        mAlarmList.get(position).setOn(false);
     }
 
     /**
@@ -245,13 +269,14 @@ public class MainActivity extends AppCompatActivity {
      * @param position
      */
     public void turnOnAlarm(int position) {
+
         MyAlarm myAlarm = mAlarmList.get(position);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY,myAlarm.getAlarmHour());
         calendar.set(Calendar.MINUTE,myAlarm.getAlarmMinute());
         calendar.set(Calendar.SECOND,0);
         calendar.set(Calendar.MILLISECOND,0);
-        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        Intent intent = new Intent("android.intent.action.ALARM_RECEIVER");
         intent.putExtra("alarmId",myAlarm.getAlarmId());
         intent.putExtra("alarmType",myAlarm.getAlarmType());
         intent.putExtra("alarmHour",myAlarm.getAlarmHour());
@@ -263,5 +288,84 @@ public class MainActivity extends AppCompatActivity {
         } else {
             alarmManager.set(AlarmManager.RTC,calendar.getTimeInMillis(),pendingIntent);
         }
+
+        mAlarmList.get(position).setOn(true);
+    }
+
+    public void insertOnDB(MyAlarm myAlarm){
+        int alarmId = myAlarm.getAlarmId();
+        boolean isEmpty = myAlarm.isEmpty();
+        boolean isOn = myAlarm.isOn();
+        int alarmHour = myAlarm.getAlarmHour();
+        int alarmMinute = myAlarm.getAlarmMinute();
+        int alarmType = myAlarm.getAlarmType();
+        String custom_days = myAlarm.getCustomDays();
+        dbHelper.insert(alarmId,isEmpty?1:0,isOn?1:0,alarmHour,alarmMinute,alarmType,custom_days);
+    }
+
+    public void updateOnDB(MyAlarm myAlarm){
+        int alarmId = myAlarm.getAlarmId();
+        boolean isEmpty = myAlarm.isEmpty();
+        boolean isOn = myAlarm.isOn();
+        int alarmHour = myAlarm.getAlarmHour();
+        int alarmMinute = myAlarm.getAlarmMinute();
+        int alarmType = myAlarm.getAlarmType();
+        String custom_days = myAlarm.getCustomDays();
+        dbHelper.update(alarmId,isEmpty?1:0,isOn?1:0,alarmHour,alarmMinute,alarmType,custom_days);
+        Log.i("MainActivity","update");
+    }
+
+    public void queryFromDB() {
+        Log.i("MainActivity","startQuery");
+
+        int alarmId;
+        boolean isEmpty;
+        boolean isOn;
+        int alarmHour;
+        int alarmMinute;
+        int alarmType;
+        String custom_days;
+        Cursor cursor = dbHelper.query();
+        while (cursor.moveToNext()){
+            MyAlarm myAlarm = new MyAlarm();
+            alarmId = cursor.getInt(0);
+            isEmpty = cursor.getInt(1) == 1;
+            isOn = cursor.getInt(2) == 1;
+            alarmHour = cursor.getInt(3);
+            alarmMinute = cursor.getInt(4);
+            alarmType = cursor.getInt(5);
+            custom_days = cursor.getString(6);
+            Log.i("MainActivity","alarmId:"+alarmId+" isEmpty:"+isEmpty+" isOn:"+isOn+" alarmHour:"+alarmHour+" " +
+                    "alarmMinute:"+alarmMinute+" alarmType:"+alarmType+" custom_days:"+custom_days);
+            myAlarm.setAlarmId(alarmId);
+            myAlarm.setEmpty(isEmpty);
+            myAlarm.setOn(isOn);
+            myAlarm.setAlarmHour(alarmHour);
+            myAlarm.setAlarmMinute(alarmMinute);
+            myAlarm.setAlarmType(alarmType);
+            myAlarm.setCustomDays(custom_days);
+            mAlarmList.add(myAlarm);
+            this.alarmId = alarmId;
+        }
+        cursor.close();
+        this.alarmId++;
+    }
+
+    public void deleteFromDB(int position) {
+        MyAlarm myAlarm = mAlarmList.get(position);
+        int alarmId = myAlarm.getAlarmId();
+        dbHelper.delete(alarmId);
+    }
+
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 }
